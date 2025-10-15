@@ -1,0 +1,1 @@
+# Vaudoise-assurance-test
