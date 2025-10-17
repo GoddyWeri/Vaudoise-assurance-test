@@ -99,23 +99,21 @@ public class ContractServiceImpl implements ContractService{
 		LocalDate today = LocalDate.now();
 
 		//Checking dates
-		if (contractDTO.getStartDate() != null && !contractDTO.getStartDate().toString().trim().isEmpty()) {
-			if (contractDTO.getStartDate().isBefore(today)) {
-		        log.error(CustomUtils.START_DATE_EARLIER_ERROR);
-			    throw new ContractDataInValidException(CustomUtils.START_DATE_EARLIER_ERROR);
-			}
-		}else{
+		if(contractDTO.getStartDate() == null) {
 			contractEntity.setStartDate(today);
+		}else if(!contractDTO.getStartDate().toString().trim().isEmpty() && contractDTO.getStartDate().isBefore(today)) {
+	        log.error(CustomUtils.START_DATE_EARLIER_ERROR);
+		    throw new ContractDataInValidException(CustomUtils.START_DATE_EARLIER_ERROR);
 		}
-
-		if (contractDTO.getEndDate() != null && !contractDTO.getEndDate().toString().trim().isEmpty()) {
-		    if (contractDTO.getEndDate().isBefore(contractDTO.getStartDate()) || contractDTO.getEndDate().isEqual(contractDTO.getStartDate())) {
+		
+		if(contractDTO.getEndDate() != null) {
+			if(!contractDTO.getEndDate().toString().trim().isEmpty() && (contractDTO.getEndDate().isBefore(contractEntity.getStartDate()) || contractDTO.getEndDate().isEqual(contractEntity.getStartDate()))) {
 		        log.error(CustomUtils.END_DATE_EARLIER_TODAY_ERROR);
 		        throw new ContractDataInValidException(CustomUtils.END_DATE_EARLIER_TODAY_ERROR);
-		    }
-		}else if(contractDTO.getEndDate().toString().trim().isEmpty()){
-			contractEntity.setEndDate(null);
-		}
+			}else if(contractDTO.getEndDate().toString().trim().isEmpty()){
+				contractEntity.setEndDate(null);
+			}
+		}	
 		
 		contractEntity.setUpdateDate(today);
 		contractEntity.setClientEntity(clientEntity);
