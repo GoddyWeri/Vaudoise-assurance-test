@@ -94,7 +94,7 @@ public class CustomtExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	ResponseEntity<ProblemDetail> handleUnknown(Exception ex) {
 	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	.body(problem(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error"));
+	.body(problem(HttpStatus.INTERNAL_SERVER_ERROR, CustomUtils.UNEXPECTED_ERROR_TXT));
 	}
 	
 }
