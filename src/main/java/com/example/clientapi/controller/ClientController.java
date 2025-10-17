@@ -70,13 +70,13 @@ public class ClientController {
 	
 	@GetMapping("/{clientId}/contracts")
 	public ResponseEntity<Page<ContractResponseDTO>> findAllClientContracts(@PathVariable Long clientId, @RequestParam(required = false) LocalDate updatedAfter, @RequestParam(required = false) LocalDate updatedBefore,
-    @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageableBody)
+    @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageableBody)
 	{	
 	    return ResponseEntity.ok(contractService.findAllClientContracts(clientId, updatedAfter, updatedBefore, pageableBody));
 	}
 	
-//	@GetMapping("/{clientId}/contracts/sumCosts")
-//	public ResponseEntity<Long> getTotalClientContractCosts(@PathVariable Long clientId) {
-//	    return ResponseEntity.ok(contractService.getTotalClientContractCosts(clientId));
-//	}
+	@GetMapping("/{clientId}/contracts/sumCosts")
+	public ResponseEntity<Long> getTotalClientContractCosts(@PathVariable Long clientId) {
+	    return ResponseEntity.ok(contractService.getTotalClientContractCosts(clientId));
+	}
 }

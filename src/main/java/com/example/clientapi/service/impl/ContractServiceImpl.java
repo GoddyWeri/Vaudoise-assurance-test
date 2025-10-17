@@ -36,29 +36,63 @@ public class ContractServiceImpl implements ContractService{
 	private ContractMapper contractMapper;
 	
 	@Override
-	public ContractResponseDTO createClientContract(Long clientId, ContractDTO contractDTO) {
-        log.info("Starting contract creation process...");
-        
-        ContractEntity contractEntityToCreate = contractInfoChecks(clientId, contractDTO);
+	public ContractResponseDTO createClientContract(Long clientId, ContractDTO contractDTO) {        
+        ContractEntity contractEntityToCreate = contractRequestInfoChecks(clientId, contractDTO);
+        log.info(CustomUtils.CREATING_CONTRACT_TEXT, contractDTO);
 		ContractEntity contractEntity = contractRepository.save(contractEntityToCreate);
+        log.info(CustomUtils.SUCCESS_CREATED_CONTRACT_TEXT);
 		return contractMapper.contractEntityToResponseDto(contractEntity);
 	}
 
 	@Override
 	public ContractResponseDTO updateClientContract(Long contractId, ContractDTO updatedContractDTO) {
-		ContractEntity foundContractEntity = contractRepository.findById(contractId)
-		        .orElseThrow(() -> new ClientDataBaseInfoException(CustomUtils.CONTRACT_ABSENT_ERROR));	
+		ContractEntity originalContractEntity = contractRepository.findById(contractId)
+				.orElseThrow(() -> {
+				    log.error(CustomUtils.CONTRACT_ABSENT_ERROR_LOG, contractId);
+				    return new ClientDataBaseInfoException(CustomUtils.CONTRACT_ABSENT_ERROR);
+				});
 				
-			foundContractEntity.setCostAmount(updatedContractDTO.getCostAmount());
-			foundContractEntity.setUpdateDate(LocalDate.now());			
-			ContractEntity contractEntity = contractRepository.save(foundContractEntity);		
+			originalContractEntity.setCostAmount(updatedContractDTO.getCostAmount());
+			originalContractEntity.setUpdateDate(LocalDate.now());			
+			ContractEntity contractEntity = contractRepository.save(originalContractEntity);	
+			
+	        log.info(CustomUtils.SUCCESS_UPDATED_CONTRACT_TEXT, updatedContractDTO);
 		return contractMapper.contractEntityToResponseDto(contractEntity);
+	}
+	
+	
+	@Override
+	public Page<ContractResponseDTO> findAllClientContracts(Long clientId, LocalDate updatedAfter, LocalDate updatedBefore,
+	        Pageable pageableBody) {
+	    if (!clientRepository.existsById(clientId)) {
+		    log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
+	        throw new ContractDataInValidException(CustomUtils.CLIENT_ABSENT_ERROR);
+	    }
+
+		checkProvidedDatesValidity(updatedAfter, updatedBefore);	
+		Page<ContractEntity> contractsPage = queryForContractPage(updatedAfter, updatedBefore, clientId, pageableBody);  
+        log.info(CustomUtils.SUCCESS_FINDING_ALL_CONTRACTS_TEXT, clientId);
+	    return contractsPage.map(contractMapper::contractEntityToResponseDto);
+	}
+	
+	
+	@Override
+	public Long getTotalClientContractCosts(Long clientId) {
+	    if (!clientRepository.existsById(clientId)) {
+		    log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
+	        throw new ContractDataInValidException(CustomUtils.CLIENT_ABSENT_ERROR);
+	    }
+        log.info(CustomUtils.SUM_SUCCESS_TEXT);
+	    return contractRepository.sumContractCostsByClientId(clientId);
 	}
 
 	
-	private ContractEntity contractInfoChecks(Long clientId, ContractDTO contractDTO) {
+	private ContractEntity contractRequestInfoChecks(Long clientId, ContractDTO contractDTO) {
 		ClientEntity clientEntity = clientRepository.findById(clientId)
-        .orElseThrow(() -> new ClientDataBaseInfoException(CustomUtils.CLIENT_FOR_CONTRACTT_ABSENT_ERROR));	
+		    .orElseThrow(() -> {
+		        log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
+		        return new ClientDataBaseInfoException(CustomUtils.CLIENT_FOR_CONTRACTT_ABSENT_ERROR);
+		    });
 		
 		//we set the entity first, as the dates will be set depending on date values sent or omitted - hence preparing for database
 		ContractEntity contractEntity = contractMapper.ContractDtoToEntity(contractDTO);
@@ -67,6 +101,7 @@ public class ContractServiceImpl implements ContractService{
 		//Checking dates
 		if (contractDTO.getStartDate() != null && !contractDTO.getStartDate().toString().trim().isEmpty()) {
 			if (contractDTO.getStartDate().isBefore(today)) {
+		        log.error(CustomUtils.START_DATE_EARLIER_ERROR);
 			    throw new ContractDataInValidException(CustomUtils.START_DATE_EARLIER_ERROR);
 			}
 		}else{
@@ -75,6 +110,7 @@ public class ContractServiceImpl implements ContractService{
 
 		if (contractDTO.getEndDate() != null && !contractDTO.getEndDate().toString().trim().isEmpty()) {
 		    if (contractDTO.getEndDate().isBefore(contractDTO.getStartDate()) || contractDTO.getEndDate().isEqual(contractDTO.getStartDate())) {
+		        log.error(CustomUtils.END_DATE_EARLIER_TODAY_ERROR);
 		        throw new ContractDataInValidException(CustomUtils.END_DATE_EARLIER_TODAY_ERROR);
 		    }
 		}else if(contractDTO.getEndDate().toString().trim().isEmpty()){
@@ -84,25 +120,10 @@ public class ContractServiceImpl implements ContractService{
 		contractEntity.setUpdateDate(today);
 		contractEntity.setClientEntity(clientEntity);
 		
+        log.debug(CustomUtils.CONTRACT_REQUEST_SUCCESSFULLY_CHECKED, contractDTO);
+		
 		return contractEntity;
 
-	}
-
-	@Override
-	public Page<ContractResponseDTO> findAllClientContracts(Long clientId, LocalDate updatedAfter, LocalDate updatedBefore,
-	        Pageable pageableBody) {
-	    if (!clientRepository.existsById(clientId)) {
-	        throw new RuntimeException("Client not found");
-	    }
-	    
-
-		checkProvidedDatesValidity(updatedAfter, updatedBefore);
-
-		
-		Page<ContractEntity> contractsPage = queryForContractPage(updatedAfter, updatedBefore, clientId, pageableBody);
-
-	    	    
-	    return contractsPage.map(contractMapper::contractEntityToResponseDto);
 	}
 
 	private Page<ContractEntity> queryForContractPage(LocalDate updatedAfter, LocalDate updatedBefore, Long clientId, Pageable pageableBody) {
@@ -126,21 +147,18 @@ public class ContractServiceImpl implements ContractService{
 	private void checkProvidedDatesValidity(LocalDate updatedAfter, LocalDate updatedBefore) {
 		LocalDate today = LocalDate.now();
 	    if (updatedAfter != null && updatedAfter.isAfter(today)) {
-	        throw new ContractDataInValidException("updatedAfter cannot be in the future");
+		    log.error(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
+	        throw new ContractDataInValidException(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT); 
 	    }
 	    if (updatedBefore != null && updatedBefore.isAfter(today)) {
-	        throw new ContractDataInValidException("updatedBefore cannot be in the future");
+		    log.error(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
+	        throw new ContractDataInValidException(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
 	    }
 	    if (updatedAfter != null && updatedBefore != null && updatedBefore.isBefore(updatedAfter)) {
-	        throw new ContractDataInValidException("updatedBefore must be after or equal to updatedAfter");
+		    log.error(CustomUtils.UPDATEBEFORE_AFTER_UPDATEAFTER_ERROR_TEXT);
+	        throw new ContractDataInValidException(CustomUtils.UPDATEBEFORE_AFTER_UPDATEAFTER_ERROR_TEXT);
 	    }
 		
-	}
-
-	@Override
-	public Long getTotalClientContractCosts(Long clientId) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }
