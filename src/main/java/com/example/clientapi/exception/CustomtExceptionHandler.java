@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.example.clientapi.utils.CustomUtils;
+
 @RestControllerAdvice
 public class CustomtExceptionHandler {
 		
@@ -42,20 +44,20 @@ public class CustomtExceptionHandler {
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	ResponseEntity<ProblemDetail> handleIntegrity(DataIntegrityViolationException ex) {
 	return ResponseEntity.status(HttpStatus.CONFLICT)
-	.body(problem(HttpStatus.CONFLICT, rootMessage(ex, "Integrity constraint violation")));
+	.body(problem(HttpStatus.CONFLICT, rootMessage(ex, CustomUtils.INTEGRITY_VIOLATION_TEXT)));
 	}
 
 	@ExceptionHandler({ QueryTimeoutException.class})
 	ResponseEntity<ProblemDetail> handleTransient(DataAccessException ex) {
 	return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-	.body(problem(HttpStatus.SERVICE_UNAVAILABLE, "Temporary database issue. Please try again."));
+	.body(problem(HttpStatus.SERVICE_UNAVAILABLE, CustomUtils.TEMPORARY_DB_DOWN_TEXT));
 	}
 
 
 	@ExceptionHandler(DataAccessException.class)
 	ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException ex) {
 	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	.body(problem(HttpStatus.INTERNAL_SERVER_ERROR, "Database error"));
+	.body(problem(HttpStatus.INTERNAL_SERVER_ERROR, CustomUtils.DB_ERROR_TEXT));
 	}
 	
 	@ExceptionHandler(HttpMessageNotReadableException.class)
