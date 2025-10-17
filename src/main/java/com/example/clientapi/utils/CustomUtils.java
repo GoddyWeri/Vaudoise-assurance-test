@@ -39,5 +39,6 @@ public class CustomUtils {
 	public static final String BIRTH_DAY_REQUIRED_ERROR_LOG = "Birthday not provided for client of type person";
 	public static final String COMPANY_IDENTIFIER_REQUIRED_ERROR_LOG = "Company identifier not provided for client of type Company";
 	public static final String CLIENT_TYPE_CHANGE_ERROR = "Cannot change client from one type to another";
+	public static final String UNEXPECTED_ERROR_TXT = "Unexpected error";
 
 }
