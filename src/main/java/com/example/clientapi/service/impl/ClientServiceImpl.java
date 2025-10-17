@@ -56,11 +56,16 @@ public class ClientServiceImpl implements ClientService{
 			        log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
 			        return new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR);
 			    });
+		if(!foundClient.getClientType().equals(updatedClientDTO.getClientType())) {
+	        log.error(CustomUtils.CLIENT_TYPE_CHANGE_ERROR);
+            throw new ClientInvalidDataException(CustomUtils.CLIENT_TYPE_CHANGE_ERROR);
+		}
 
         clientMapper.updateFromDto(updatedClientDTO, foundClient);
         
         clientRepository.findByClientTypeAndPhoneAndEmailAndNameAndBirthDateAndCompanyIdentifier(foundClient.getClientType(), foundClient.getPhone(), foundClient.getEmail(), foundClient.getName(), foundClient.getBirthDate(), foundClient.getCompanyIdentifier())
         .ifPresent(existing -> {
+	        log.error(CustomUtils.CLIENT_DATA_CONFLICT_ERROR);
             throw new ClientDataBaseInfoException(CustomUtils.CLIENT_DATA_CONFLICT_ERROR);
         });
                 
@@ -87,10 +92,16 @@ public class ClientServiceImpl implements ClientService{
 		if(clientDTO.getClientType().equals(CustomUtils.PERSON_TEXT) && (clientDTO.getCompanyIdentifier() != null && !clientDTO.getCompanyIdentifier().equals(CustomUtils.EMPTY_STRING))) {
 	        log.error(CustomUtils.PERSON_COMPANY_ID_ERROR);
 			throw new ClientInvalidDataException(CustomUtils.PERSON_COMPANY_ID_ERROR);
+		}else if(clientDTO.getClientType().equals(CustomUtils.PERSON_TEXT) && (clientDTO.getBirthDate() == null || clientDTO.getBirthDate().toString().equals(CustomUtils.EMPTY_STRING))) {
+	        log.error(CustomUtils.BIRTH_DAY_REQUIRED_ERROR_LOG);
+			throw new ClientInvalidDataException(CustomUtils.BIRTH_DAY_REQUIRED_ERROR);
 		}
 		if(clientDTO.getClientType().equals(CustomUtils.COMPANY_TEXT) && (clientDTO.getBirthDate() != null && !clientDTO.getBirthDate().toString().trim().isEmpty())) {
 	        log.error(CustomUtils.COMPANY_BDAY_ERROR);
 			throw new ClientInvalidDataException(CustomUtils.COMPANY_BDAY_ERROR);
+		}else if(clientDTO.getClientType().equals(CustomUtils.COMPANY_TEXT) && (clientDTO.getCompanyIdentifier() == null || clientDTO.getCompanyIdentifier().toString().equals(CustomUtils.EMPTY_STRING))) {
+	        log.error(CustomUtils.COMPANY_IDENTIFIER_REQUIRED_ERROR_LOG);
+			throw new ClientInvalidDataException(CustomUtils.COMPANY_ID_REQUIRED_ERROR);
 		}
 		
 		clientRepository.findByClientTypeAndPhoneAndEmailAndNameAndBirthDateAndCompanyIdentifier(clientDTO.getClientType(), clientDTO.getPhone(), clientDTO.getEmail(), clientDTO.getName(), clientDTO.getBirthDate(), clientDTO.getCompanyIdentifier())
@@ -98,6 +109,10 @@ public class ClientServiceImpl implements ClientService{
 			        log.error(CustomUtils.CLIENT_DATA_CONFLICT_ERROR_LOG, clientDTO);
 			        throw new ClientDataBaseInfoException(CustomUtils.CLIENT_DATA_CONFLICT_ERROR);
 			    });	
+		
+		if(clientDTO.getClientType().equals(CustomUtils.PERSON_TEXT)) {
+			clientDTO.setCompanyIdentifier(null);
+		}
 	}
 
 }
