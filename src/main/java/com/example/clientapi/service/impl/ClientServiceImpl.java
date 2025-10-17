@@ -1,9 +1,7 @@
 package com.example.clientapi.service.impl;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,9 +12,7 @@ import com.example.clientapi.dto.ClientUpdateRequestDTO;
 import com.example.clientapi.exception.ClientDataBaseInfoException;
 import com.example.clientapi.exception.ClientInvalidDataException;
 import com.example.clientapi.model.ClientEntity;
-import com.example.clientapi.model.ContractEntity;
 import com.example.clientapi.repository.ClientRepository;
-import com.example.clientapi.repository.ContractRepository;
 import com.example.clientapi.service.ClientService;
 import com.example.clientapi.service.mapper.ClientMapper;
 import com.example.clientapi.utils.CustomUtils;
@@ -24,33 +20,42 @@ import com.example.clientapi.utils.CustomUtils;
 
 @Service
 public class ClientServiceImpl implements ClientService{
+    private static final Logger log = LoggerFactory.getLogger(ContractServiceImpl.class);
+
 	@Autowired
 	private ClientRepository clientRepository;
-	
-	@Autowired
-	private ContractRepository contractRepository;
 	
 	@Autowired
 	private ClientMapper clientMapper;
 
 	@Override
 	public ClientResponseDTO createClient(ClientCreateRequestDTO clientDTO) {
-		clientInfoChecks(clientDTO);
+        log.info(CustomUtils.CREATING_CLIENT_TEXT, clientDTO);
+		clientRequestDataValidations(clientDTO);
 		ClientEntity clientEntity = clientRepository.save(clientMapper.ClientCreateDtoToEntity(clientDTO));
+        log.info(CustomUtils.SUCCESS_CREATED_CLIENT_TEXT);
 		return clientMapper.ClientEntitytoResponseDto(clientEntity);
 	}
 
 	@Override
 	public ClientResponseDTO readClientById(Long clientId) {
 		ClientEntity client = clientRepository.findById(clientId)
-				.orElseThrow(() -> new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR));	
+		    .orElseThrow(() -> {
+		        log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
+		        return new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR);
+		    });
+		
+        log.info(CustomUtils.SUCCESS_CLIENT_FOUND_LOG, clientId);
 		return clientMapper.ClientEntitytoResponseDto(client);
 	}
 
 	@Override
 	public ClientResponseDTO updateClient(Long clientId, ClientUpdateRequestDTO updatedClientDTO) {
 		ClientEntity foundClient = clientRepository.findById(clientId)
-                .orElseThrow(() -> new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR));
+			    .orElseThrow(() -> {
+			        log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
+			        return new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR);
+			    });
 
         clientMapper.updateFromDto(updatedClientDTO, foundClient);
         
@@ -58,32 +63,39 @@ public class ClientServiceImpl implements ClientService{
         .ifPresent(existing -> {
             throw new ClientDataBaseInfoException(CustomUtils.CLIENT_DATA_CONFLICT_ERROR);
         });
-        
+                
         ClientEntity updatedEntity = clientRepository.save(foundClient);
+        log.info(CustomUtils.UPDATING_CLIENT_SUCCESS_LOG, clientId, updatedClientDTO);
+
         return clientMapper.ClientEntitytoResponseDto(updatedEntity);
 	}
 
 	@Override
 	@Transactional
 	public ClientResponseDTO deleteClientById(Long clientId) {
+        log.info(CustomUtils.DELETING_CLIENT_LOG, clientId);
         ClientEntity client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientDataBaseInfoException(CustomUtils.CLIENT_ABSENT_ERROR));
         
         clientRepository.delete(client);
+        log.info(CustomUtils.DELETE_CLIENT_SUCCESS_LOG, clientId);
         
         return clientMapper.ClientEntitytoResponseDto(client);
 	}
 	
-	private void clientInfoChecks(ClientCreateRequestDTO clientDTO) {
+	private void clientRequestDataValidations(ClientCreateRequestDTO clientDTO) {
 		if(clientDTO.getClientType().equals(CustomUtils.PERSON_TEXT) && (clientDTO.getCompanyIdentifier() != null && !clientDTO.getCompanyIdentifier().equals(CustomUtils.EMPTY_STRING))) {
+	        log.error(CustomUtils.PERSON_COMPANY_ID_ERROR);
 			throw new ClientInvalidDataException(CustomUtils.PERSON_COMPANY_ID_ERROR);
 		}
 		if(clientDTO.getClientType().equals(CustomUtils.COMPANY_TEXT) && (clientDTO.getBirthDate() != null && !clientDTO.getBirthDate().toString().trim().isEmpty())) {
+	        log.error(CustomUtils.COMPANY_BDAY_ERROR);
 			throw new ClientInvalidDataException(CustomUtils.COMPANY_BDAY_ERROR);
 		}
 		
 		clientRepository.findByClientTypeAndPhoneAndEmailAndNameAndBirthDateAndCompanyIdentifier(clientDTO.getClientType(), clientDTO.getPhone(), clientDTO.getEmail(), clientDTO.getName(), clientDTO.getBirthDate(), clientDTO.getCompanyIdentifier())
 			    .ifPresent(existing -> {
+			        log.error(CustomUtils.CLIENT_DATA_CONFLICT_ERROR_LOG, clientDTO);
 			        throw new ClientDataBaseInfoException(CustomUtils.CLIENT_DATA_CONFLICT_ERROR);
 			    });	
 	}

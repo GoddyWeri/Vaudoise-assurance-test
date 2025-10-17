@@ -13,7 +13,7 @@ public class CustomUtils {
 	public static final String END_DATE_EARLIER_ERROR = "End date cannot be earlier than today";
 	public static final String END_DATE_EARLIER_TODAY_ERROR = "End date cannot be earlier or same as the start date";
 	public static final String CONTRACT_ABSENT_ERROR = "contract of associated id is not found in database";
-	public static final String CREATING_CONTRACT_TEXT = "Creating client with data: {}";
+	public static final String CREATING_CONTRACT_TEXT = "Creating contract with data: {}";
 	public static final String CONTRACT_REQUEST_SUCCESSFULLY_CHECKED = "Contract with data: {} successfully checked";
 	public static final String SUCCESS_CREATED_CONTRACT_TEXT = "Contract succesfully created";
 	public static final String SUCCESS_UPDATED_CONTRACT_TEXT = "Contract succesfully created with new info from: {}";
@@ -24,4 +24,14 @@ public class CustomUtils {
 	public static final String UPDATEBEFORE_AFTER_UPDATEAFTER_ERROR_TEXT = "updatedBefore must be after or equal to updatedAfter";
 	public static final String UPDATEBEFORE_IN_FUTURE_ERROR_TEXT = "updatedBefore cannot be in the future";
 	public static final String UPDATEAFTER_IN_FUTURE_ERROR_TEXT = "updatedAfter cannot be in the future";
+	public static final String CREATING_CLIENT_TEXT = "Creating client with data: {}";
+	public static final String SUCCESS_CREATED_CLIENT_TEXT = "Client succesfully created";
+	public static final String CLIENT_DATA_CONFLICT_ERROR_LOG = "Client with exact data as: {} already exist";
+	public static final String SUCCESS_CLIENT_FOUND_LOG = "Client of id: {}, succsefully read";
+	public static final String UPDATING_CLIENT_SUCCESS_LOG = "Successfully updated client of client ID: {} with data: {}";
+	public static final String DELETE_CLIENT_SUCCESS_LOG = "Successfully deleted client of client ID: {} and contracts dissociated, with update dates set to today";
+	public static final String DELETING_CLIENT_LOG = "Deleting client of client ID: {}";
+	public static final String INTEGRITY_VIOLATION_TEXT = "Integrity constraint violation";
+	public static final String TEMPORARY_DB_DOWN_TEXT = "Temporary database issue. Please try again.";
+	public static final String DB_ERROR_TEXT = "Database error";
 }
