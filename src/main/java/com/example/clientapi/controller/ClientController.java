@@ -1,5 +1,6 @@
 package com.example.clientapi.controller;
 
+import java.net.URI;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.clientapi.dto.ClientCreateRequestDTO;
 import com.example.clientapi.dto.ClientResponseDTO;
 import com.example.clientapi.dto.ClientUpdateRequestDTO;
-import com.example.clientapi.dto.ContractDTO;
+import com.example.clientapi.dto.ContractRequestDTO;
 import com.example.clientapi.dto.ContractResponseDTO;
 import com.example.clientapi.service.ClientService;
 import com.example.clientapi.service.ContractService;
@@ -40,7 +41,9 @@ public class ClientController {
 	
 	@PostMapping("/")
 	public ResponseEntity<ClientResponseDTO> createClient(@Valid @RequestBody ClientCreateRequestDTO clientDTO) {
-	    return ResponseEntity.ok(clientService.createClient(clientDTO));
+	    ClientResponseDTO createdClient = clientService.createClient(clientDTO);
+	    URI createdLocation = URI.create("/clients/" + createdClient.getId());
+	    return ResponseEntity.created(createdLocation).body(createdClient);
 	}
 	
 	@GetMapping("/{id}")
@@ -59,12 +62,12 @@ public class ClientController {
 	}
 	
 	@PostMapping("/{clientId}/contracts")
-	public ResponseEntity<ContractResponseDTO> createClientContract(@PathVariable Long clientId, @Valid @RequestBody ContractDTO contractDTO) {
+	public ResponseEntity<ContractResponseDTO> createClientContract(@PathVariable Long clientId, @Valid @RequestBody ContractRequestDTO contractDTO) {
 	    return ResponseEntity.ok(contractService.createClientContract(clientId, contractDTO));
 	}
 	
 	@PatchMapping("/contracts/{id}")
-	public ResponseEntity<ContractResponseDTO> updateClientContract(@PathVariable Long id, @Valid @RequestBody ContractDTO contractDTO) {
+	public ResponseEntity<ContractResponseDTO> updateClientContract(@PathVariable Long id, @Valid @RequestBody ContractRequestDTO contractDTO) {
 	    return ResponseEntity.ok(contractService.updateClientContract(id, contractDTO));
 	}
 	

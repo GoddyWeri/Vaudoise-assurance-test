@@ -10,7 +10,7 @@ import com.example.clientapi.model.ClientEntity;
 
 @Mapper(componentModel = "spring")
 public interface ClientMapper {
-	  ClientEntity ClientCreateDtoToEntity(ClientCreateRequestDTO dto);
-	  ClientResponseDTO ClientEntitytoResponseDto(ClientEntity entity);	  
+	  ClientEntity clientCreateDtoToEntity(ClientCreateRequestDTO dto);
+	  ClientResponseDTO clientEntitytoResponseDto(ClientEntity entity);	  
 	  void updateFromDto(ClientUpdateRequestDTO updatedClientDTO, @MappingTarget ClientEntity foundClient);
 }
