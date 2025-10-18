@@ -9,9 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.example.clientapi.dto.ContractDTO;
+import com.example.clientapi.dto.ContractRequestDTO;
 import com.example.clientapi.dto.ContractResponseDTO;
-import com.example.clientapi.exception.ClientDataBaseInfoException;
+import com.example.clientapi.exception.ClientNotFoundException;
 import com.example.clientapi.exception.ContractDataInValidException;
 import com.example.clientapi.model.ClientEntity;
 import com.example.clientapi.model.ContractEntity;
@@ -36,7 +36,7 @@ public class ContractServiceImpl implements ContractService{
 	private ContractMapper contractMapper;
 	
 	@Override
-	public ContractResponseDTO createClientContract(Long clientId, ContractDTO contractDTO) {        
+	public ContractResponseDTO createClientContract(Long clientId, ContractRequestDTO contractDTO) {        
         ContractEntity contractEntityToCreate = contractRequestInfoChecks(clientId, contractDTO);
         log.info(CustomUtils.CREATING_CONTRACT_TEXT, contractDTO);
 		ContractEntity contractEntity = contractRepository.save(contractEntityToCreate);
@@ -45,19 +45,18 @@ public class ContractServiceImpl implements ContractService{
 	}
 
 	@Override
-	public ContractResponseDTO updateClientContract(Long contractId, ContractDTO updatedContractDTO) {
+	public ContractResponseDTO updateClientContract(Long contractId, ContractRequestDTO updatedContractDTO) {
 		ContractEntity originalContractEntity = contractRepository.findById(contractId)
 				.orElseThrow(() -> {
 				    log.error(CustomUtils.CONTRACT_ABSENT_ERROR_LOG, contractId);
-				    return new ClientDataBaseInfoException(CustomUtils.CONTRACT_ABSENT_ERROR);
+				    return new ClientNotFoundException(CustomUtils.CONTRACT_ABSENT_ERROR);
 				});
 				
 			originalContractEntity.setCostAmount(updatedContractDTO.getCostAmount());
 			originalContractEntity.setUpdateDate(LocalDate.now());			
-			ContractEntity contractEntity = contractRepository.save(originalContractEntity);	
-			
+			ContractEntity updatedContractEntity = contractRepository.save(originalContractEntity);				
 	        log.info(CustomUtils.SUCCESS_UPDATED_CONTRACT_TEXT, updatedContractDTO);
-		return contractMapper.contractEntityToResponseDto(contractEntity);
+		return contractMapper.contractEntityToResponseDto(updatedContractEntity);
 	}
 	
 	
@@ -87,11 +86,11 @@ public class ContractServiceImpl implements ContractService{
 	}
 
 	
-	private ContractEntity contractRequestInfoChecks(Long clientId, ContractDTO contractDTO) {
+	private ContractEntity contractRequestInfoChecks(Long clientId, ContractRequestDTO contractDTO) {
 		ClientEntity clientEntity = clientRepository.findById(clientId)
 		    .orElseThrow(() -> {
 		        log.error(CustomUtils.CLIENT_ABSENT_ERROR_LOG, clientId);
-		        return new ClientDataBaseInfoException(CustomUtils.CLIENT_FOR_CONTRACTT_ABSENT_ERROR);
+		        return new ClientNotFoundException(CustomUtils.CLIENT_FOR_CONTRACTT_ABSENT_ERROR);
 		    });
 		
 		//we set the entity first, as the dates will be set depending on date values sent or omitted - hence preparing for database
@@ -124,34 +123,39 @@ public class ContractServiceImpl implements ContractService{
 
 	}
 
+	//Block created to execute the best appropriate repository function, depending on passed in date ranges
 	private Page<ContractEntity> queryForContractPage(LocalDate updatedAfter, LocalDate updatedBefore, Long clientId, Pageable pageableBody) {
 		Page<ContractEntity> contractsPage;
+		LocalDate today = LocalDate.now();
 		
 		if (updatedAfter == null && updatedBefore == null) {
-			    contractsPage = contractRepository.findByClientEntityId(clientId, pageableBody);
+			    contractsPage = contractRepository.findByClientEntityIdAndEndDateAfter(clientId, pageableBody, today); 
 
 			} else if (updatedAfter != null  && updatedBefore == null ) {
-			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateAfter(clientId, updatedAfter, pageableBody);
+			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateAfterAndEndDateAfter(clientId, updatedAfter, pageableBody, today);
 
 			} else if (updatedAfter == null  && updatedBefore != null && !updatedBefore.toString().trim().isEmpty()) {
-			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateBefore(clientId, updatedBefore, pageableBody);
+			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateBeforeAndEndDateAfter(clientId, updatedBefore, pageableBody, today);
 
 			} else {
-			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateBetween(clientId, updatedAfter, updatedBefore, pageableBody);
+			    contractsPage = contractRepository.findByClientEntityIdAndUpdateDateBetweenAndEndDateAfter(clientId, updatedAfter, updatedBefore, pageableBody, today);
 			}		
 		return contractsPage;
 	}
 
 	private void checkProvidedDatesValidity(LocalDate updatedAfter, LocalDate updatedBefore) {
 		LocalDate today = LocalDate.now();
+		//minimum threshold date filter should always be less than or equal to today's date
 	    if (updatedAfter != null && updatedAfter.isAfter(today)) {
 		    log.error(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
 	        throw new ContractDataInValidException(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT); 
 	    }
+		//maximum threshold date filter should always be less than or equal to today's date, because a contract could not have had an update in the future.
 	    if (updatedBefore != null && updatedBefore.isAfter(today)) {
 		    log.error(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
-	        throw new ContractDataInValidException(CustomUtils.UPDATEAFTER_IN_FUTURE_ERROR_TEXT);
+	        throw new ContractDataInValidException(CustomUtils.UPDATEBEFORE_IN_FUTURE_ERROR_TEXT);
 	    }
+		//minimum threshold date filter should be always less than maximum threshold date filter
 	    if (updatedAfter != null && updatedBefore != null && updatedBefore.isBefore(updatedAfter)) {
 		    log.error(CustomUtils.UPDATEBEFORE_AFTER_UPDATEAFTER_ERROR_TEXT);
 	        throw new ContractDataInValidException(CustomUtils.UPDATEBEFORE_AFTER_UPDATEAFTER_ERROR_TEXT);

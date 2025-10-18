@@ -31,8 +31,13 @@ public class CustomtExceptionHandler {
 	return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(problem(HttpStatus.NOT_ACCEPTABLE, ex.getMessage()));
 	}
 
-	@ExceptionHandler(ClientDataBaseInfoException.class)
-	ResponseEntity<ProblemDetail> handleClientDb(ClientDataBaseInfoException ex) {
+	@ExceptionHandler(ClientNotFoundException.class)
+	ResponseEntity<ProblemDetail> handleClientDb(ClientNotFoundException ex) {
+	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem(HttpStatus.NOT_FOUND, ex.getMessage()));
+	}
+	
+	@ExceptionHandler(ClientDataConflictException.class)
+	ResponseEntity<ProblemDetail> handleClientDb(ClientDataConflictException ex) {
 	return ResponseEntity.status(HttpStatus.CONFLICT).body(problem(HttpStatus.CONFLICT, ex.getMessage()));
 	}
 

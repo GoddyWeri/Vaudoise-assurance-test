@@ -1,13 +1,13 @@
 package com.example.clientapi.exception;
 
-public class ClientDataBaseInfoException extends RuntimeException{
+public class ClientNotFoundException extends RuntimeException{
 	private static final long serialVersionUID = 1L;
 	
-	public ClientDataBaseInfoException() {
+	public ClientNotFoundException() {
 		super();
 	}
 	
-	public ClientDataBaseInfoException(String message) {
+	public ClientNotFoundException(String message) {
 		super(message);
 	}
 }

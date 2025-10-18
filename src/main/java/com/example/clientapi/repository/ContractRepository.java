@@ -16,13 +16,13 @@ public interface ContractRepository extends JpaRepository<ContractEntity, Long>{
 	
 	 Page<ContractEntity> findAllByClientEntity_Id(Long clientId, Pageable pageable);
 
-	 Page<ContractEntity> findByClientEntityId(Long clientId, Pageable pageable);
+	 Page<ContractEntity> findByClientEntityIdAndEndDateAfter(Long clientId, Pageable pageable, LocalDate today);
 
-	 Page<ContractEntity> findByClientEntityIdAndUpdateDateAfter(Long clientId, LocalDate updatedAfter, Pageable pageable);
+	 Page<ContractEntity> findByClientEntityIdAndUpdateDateAfterAndEndDateAfter(Long clientId, LocalDate updatedAfter, Pageable pageable,  LocalDate today);
 
-	 Page<ContractEntity> findByClientEntityIdAndUpdateDateBefore(Long clientId, LocalDate updatedBefore, Pageable pageable);
+	 Page<ContractEntity> findByClientEntityIdAndUpdateDateBeforeAndEndDateAfter(Long clientId, LocalDate updatedBefore, Pageable pageable,  LocalDate today);
 
-	 Page<ContractEntity> findByClientEntityIdAndUpdateDateBetween(Long clientId, LocalDate updatedAfter, LocalDate updatedBefore, Pageable pageable);
+	 Page<ContractEntity> findByClientEntityIdAndUpdateDateBetweenAndEndDateAfter(Long clientId, LocalDate updatedAfter, LocalDate updatedBefore, Pageable pageable,  LocalDate today);
 	 
 	 @Query("SELECT COALESCE(SUM(c.costAmount), 0) FROM ContractEntity c WHERE c.clientEntity.id = :clientId")
 	Long sumContractCostsByClientId(@Param("clientId") Long clientId);
