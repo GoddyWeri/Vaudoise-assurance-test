@@ -17,8 +17,11 @@ import org.springframework.data.domain.Pageable;
 import com.example.clientapi.model.ClientEntity;
 import com.example.clientapi.model.ContractEntity;
 
+import jakarta.transaction.Transactional;
+
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 
+@Transactional
 class ContractRepositoryTests {
 
     @Autowired
@@ -29,29 +32,39 @@ class ContractRepositoryTests {
 
     @Test
     void ContractRepository_ContractRepository_FindByClientEntityIdAndUpdateDateBetweenAndEndDateAfter_ShouldReturnOnlyActiveContracts() {
-        Long clientId = 1L;
         LocalDate today = LocalDate.now();
+        
+
+		ClientEntity client = ClientEntity.builder()
+		    .clientType("Person")  
+		    .name("Test Client")
+		    .build();
+		
+		entityManager.persist(client);
+		entityManager.flush();
+		
+	    Long clientId = client.getId();  
 
         ContractEntity activeContract1 = ContractEntity.builder()
-            .clientEntity(ClientEntity.builder().id(clientId).build())
+            .clientEntity(client)
             .endDate(today.plusDays(10))
             .updateDate(today.minusDays(10))
             .build();
         
         ContractEntity activeContract2 = ContractEntity.builder()
-                .clientEntity(ClientEntity.builder().id(clientId).build())
+                .clientEntity(client)
                 .endDate(today.plusDays(11))
                 .updateDate(today.minusDays(11))
                 .build();
         
         ContractEntity activeContract3 = ContractEntity.builder()
-                .clientEntity(ClientEntity.builder().id(clientId).build())
+                .clientEntity(client)
                 .endDate(today.plusDays(12))
                 .updateDate(today.minusDays(12))
                 .build();
 
         ContractEntity expiredContract = ContractEntity.builder()
-            .clientEntity(ClientEntity.builder().id(clientId).build())
+            .clientEntity(client)
             .endDate(today.minusDays(5))
             .updateDate(today.minusDays(13))
             .build();
