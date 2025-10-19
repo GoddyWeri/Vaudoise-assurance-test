@@ -1,16 +1,16 @@
 # HOW TO RUN PROJECT
 
-After cloning the repository, open a terminal in the project directory. If Docker is installed, run:
+After cloning the repository, open a terminal in the project directory(main branch). If Docker is installed, run:
 - docker build -t clientapi .
 - docker run -v h2data:/app/data -p 8080:8080 clientapi 
 - This builds the image and runs the app, using a Docker volume (h2data) to persist the H2 database.
 
 ---
 
-# TO TEST PROJECT(If needed)
+# TO TEST PROJECT
 
-I added a postman export to the project with the name Vaudoise-client.postman_collection.json 
-(that contains a workspace for the project API testing) that can be imported in a postman app or postman website after logging in.
+I added a postman export to the project, named Vaudoise-client.postman_collection.json 
+(that contains a workspace for the project API testing) that can be downloaded and then imported in a postman app or postman website after logging in.
 
 ---
 
